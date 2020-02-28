@@ -1,0 +1,11 @@
+/home/aslan/Development/Godot/TechSim/Server/bin/Debug/netcoreapp3.1/Server
+/home/aslan/Development/Godot/TechSim/Server/bin/Debug/netcoreapp3.1/Server.deps.json
+/home/aslan/Development/Godot/TechSim/Server/bin/Debug/netcoreapp3.1/Server.runtimeconfig.json
+/home/aslan/Development/Godot/TechSim/Server/bin/Debug/netcoreapp3.1/Server.runtimeconfig.dev.json
+/home/aslan/Development/Godot/TechSim/Server/bin/Debug/netcoreapp3.1/Server.dll
+/home/aslan/Development/Godot/TechSim/Server/bin/Debug/netcoreapp3.1/Server.pdb
+/home/aslan/Development/Godot/TechSim/Server/obj/Debug/netcoreapp3.1/Server.csprojAssemblyReference.cache
+/home/aslan/Development/Godot/TechSim/Server/obj/Debug/netcoreapp3.1/Server.AssemblyInfoInputs.cache
+/home/aslan/Development/Godot/TechSim/Server/obj/Debug/netcoreapp3.1/Server.AssemblyInfo.cs
+/home/aslan/Development/Godot/TechSim/Server/obj/Debug/netcoreapp3.1/Server.dll
+/home/aslan/Development/Godot/TechSim/Server/obj/Debug/netcoreapp3.1/Server.pdb
