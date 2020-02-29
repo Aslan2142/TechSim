@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 
 namespace TechSimServer
 {
@@ -36,21 +37,21 @@ namespace TechSimServer
         }
 
         // Return request based on data
-        public static Request GetRequest(string data)
+        public static Request DeserializeRequest(byte[] bytes)
         {
-            string[] arrayOfData = data.Split(Consts.REQUEST_DATA_SEPARATOR);
+            // Remove leading zeros
+            int size = Array.FindLastIndex(bytes, b => b != 0);
+            Array.Resize(ref bytes, size + 1);
 
-            // Bad request
-            if (arrayOfData.Length != 3)
-            {
-                throw new Exception();
-            }
+            // Deserialize JSON data
+            return (Request)JsonSerializer.Deserialize(bytes, typeof(Request));
+        }
 
-            return new Request(
-                Convert.ToInt32(arrayOfData[0]), // UserID
-                (RequestType)Enum.Parse(typeof(RequestType), arrayOfData[1]), // Type
-                arrayOfData[2] // Data
-            );
+        public static byte[] SerializeResponse(Response response)
+        {
+            JsonSerializerOptions options = new JsonSerializerOptions();
+
+            return JsonSerializer.SerializeToUtf8Bytes(response, typeof(Response), options);
         }
 
     }

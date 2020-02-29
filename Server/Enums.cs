@@ -3,9 +3,16 @@ using System;
 namespace TechSimServer
 {
 
+    [Serializable]
     public enum RequestType
     {
-        GetTime, GetTasks // TO-DO
+        Disconnect, GetTime, GetTasks // TO-DO
+    }
+
+    [Serializable]
+    public enum ResponseType
+    {
+        InvalidData, InvalidRequest, Time, Tasks // TO-DO
     }
 
 }

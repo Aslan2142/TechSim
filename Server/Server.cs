@@ -12,17 +12,19 @@ namespace TechSimServer
 
         protected TcpListener server;
         public int port { get; set; }
-        public int bufferSize { get; protected set; }
+        public int bufferSize { get; set; }
 
-        // Default port is 2142
+        // Set default values
         public Server()
         {
             port = 2142;
+            bufferSize = 128;
         }
 
-        public Server(int _port)
+        public Server(int _port, int _bufferSize)
         {
             port = _port;
+            bufferSize = _bufferSize;
         }
 
         // Start server
@@ -61,29 +63,30 @@ namespace TechSimServer
                 NetworkStream stream = client.GetStream();
 
                 // Fill buffer with data from stream
-                byte[] buffer = new byte[128];
+                byte[] buffer = new byte[bufferSize];
                 stream.Read(buffer, 0, buffer.Length);
-
-                // Get unicode data from buffer
-                string data = Encoding.Unicode.GetString(buffer).Replace("\0", "");
-
-                // Ignore if data is empty
-                if (data.Length < 1)
-                {
+                
+                // Get request
+                Request request;
+                try {
+                    request = Helpers.DeserializeRequest(buffer);
+                } catch (Exception e) { // Respond with "InvalidData" on exception
+                    buffer = Helpers.SerializeResponse(new Response(ResponseType.InvalidData, e));
+                    stream.Write(buffer, 0, buffer.Length);
                     continue;
                 }
 
                 // Check if client wants to close connection
-                if (data == "close")
+                if (request.Type == RequestType.Disconnect)
                 {
                     break;
                 }
 
                 // Handle client request
-                data = Game.instance.HandleRequest(Helpers.GetRequest(data));
+                Response response = Game.instance.HandleRequest(request);
 
                 // Fill buffer with returned data and send it to client
-                buffer = Encoding.Unicode.GetBytes(data);
+                buffer = Helpers.SerializeResponse(response);
                 stream.Write(buffer, 0, buffer.Length);
             }
 

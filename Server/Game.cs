@@ -36,11 +36,11 @@ namespace TechSimServer
             return true;
         }
 
-        public string HandleRequest(Request request)
+        public Response HandleRequest(Request request)
         {
             // TO-DO
 
-            return "null";
+            return new Response(ResponseType.InvalidRequest);
         }
         
     }

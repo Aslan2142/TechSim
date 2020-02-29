@@ -25,11 +25,9 @@ namespace TechSimServer
             }
 
             // Start server
-            Server server = new Server(port);
+            Server server = new Server(port, 1024);
             try {
-
                 server.Start(true);
-
             } catch (Exception) {
                 Console.WriteLine("\nServer error");
                 return;
