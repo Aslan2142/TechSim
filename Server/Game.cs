@@ -7,11 +7,11 @@ namespace TechSimServer
     class Game
     {
 
-        // Singleton instance
-        public static Game instance { get; protected set; }
+        public static Game instance { get; protected set; } // Singleton instance
 
-        // Game data
-        public GameData data { get; protected set; }
+        public GameData data { get; protected set; } // Game data
+
+        private Timer tickTimer = new Timer();
 
         public Game()
         {
@@ -36,13 +36,40 @@ namespace TechSimServer
             return true;
         }
 
+        // Start game tick timer
+        public void Start()
+        {
+            tickTimer.Interval = data.tickTime;
+            tickTimer.AutoReset = true;
+            tickTimer.Elapsed += Tick;
+
+            tickTimer.Start();
+        }
+
+        // Stop game tick timer
+        public void Stop()
+        {
+            tickTimer.Stop();
+        }
+
+        // Game tick
+        // This is called automatically by tickTimer after game started
+        private void Tick(object sender, ElapsedEventArgs e)
+        {
+            data.currentTime += data.timeSpeed;
+        }
+
         public Response HandleRequest(Request request)
         {
-            // TO-DO
+            switch (request.Type)
+            {
+                case RequestType.GetTime:
+                    return new Response(ResponseType.Time, Helpers.GetTimeDate(data.currentTime));
+            }
 
             return new Response(ResponseType.InvalidRequest);
         }
-        
+
     }
 
 }

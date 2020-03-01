@@ -1,60 +1,96 @@
 ﻿using System;
+using System.Text.Json;
 
 namespace TechSimServer
 {
-    
+
     public class Program
     {
-        
+
         // Program entry point
         private static void Main(string[] args)
         {
-            // Start game instance
-            Game.Load();
+            // Load and start game instance
+            if (!Game.Load())
+            {
+                Console.WriteLine("Game could not be loaded. Exiting...");
+                return;
+            }
+            Game.instance.Start();
 
             // Get port
             Console.WriteLine("Enter Port Number (1000-65535)");
             Console.Write("> ");
             int port;
-            try {
+            try
+            {
                 port = Convert.ToInt32(Console.ReadLine());
                 if (port < 1000 || port > 65535) throw new Exception();
-            } catch (Exception) {
+            }
+            catch (Exception)
+            {
                 Console.WriteLine("\nPort has to be a number between 1000 and 65535");
                 return;
             }
 
             // Start server
             Server server = new Server(port, 1024);
-            try {
+            try
+            {
                 server.Start(true);
-            } catch (Exception) {
+            }
+            catch (Exception)
+            {
                 Console.WriteLine("\nServer error");
                 return;
             }
 
             // Listen for commands
-            while (true)
+            bool gameRunning = true;
+            while (gameRunning)
             {
-                string command = Console.ReadLine();
+                string command = Console.ReadLine().ToLower();
 
                 switch (command)
                 {
                     // Stop server
                     case "stop":
-                        Console.WriteLine("\nStopping the Server...");
-                        server.Stop();
-                        Environment.Exit(0);
+                        gameRunning = false;
                         break;
-                    
+
                     // Unknown command
                     default:
                         Console.WriteLine("\nUnknown Command - " + command);
                         break;
                 }
             }
+
+            // Stop server
+            Console.WriteLine("\nStopping the Server...");
+            server.Stop();
+
+            // Stop and save game instance
+            Game.instance.Stop();
+            bool saving = true;
+            while (saving)
+            {
+                if (!Game.Save())
+                {
+                    Console.WriteLine("Game could not be saved. Retry?");
+                    Console.Write("(yes/no) > ");
+
+                    if (Console.ReadLine() == "no")
+                    {
+                        saving = false;
+                    }
+                }
+                else
+                {
+                    saving = false;
+                }
+            }
         }
-        
+
     }
-    
+
 }

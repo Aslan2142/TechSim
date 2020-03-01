@@ -19,6 +19,10 @@ config/name="TechSim"
 run/main_scene="res://assets/scenes/Menu.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+Client="*res://assets/scripts/Client.cs"
+
 [rendering]
 
 environment/default_environment="res://default_env.tres"

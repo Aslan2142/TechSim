@@ -1,59 +1,54 @@
 using System;
 using System.Text.Json;
 
-namespace TechSimServer
+public static class Helpers
 {
 
-    public static class Helpers
+    // Returns time and date by using time in hours as parameter
+    public static TimeDate GetTimeDate(int time)
     {
+        int hour = time;
+        int day = 0;
+        int month = 0;
+        int year = 1980;
 
-        // Returns time and date by using time in hours as parameter
-        public static TimeDate GetTimeDateString(int time)
+        while (hour >= 24)
         {
-            int hour = time;
-            int day = 0;
-            int month = 0;
-            int year = 1980;
-
-            while (hour >= 24)
-            {
-                hour -= 24;
-                day++;
-            }
-
-            while (day > 30)
-            {
-                day -= 30;
-                month++;
-            }
-
-            while (month > 12)
-            {
-                month -= 12;
-                year++;
-            }
-
-            return new TimeDate(hour, day, month, year);
+            hour -= 24;
+            day++;
         }
 
-        // Return request based on data
-        public static Request DeserializeRequest(byte[] bytes)
+        while (day > 30)
         {
-            // Remove leading zeros
-            int size = Array.FindLastIndex(bytes, b => b != 0);
-            Array.Resize(ref bytes, size + 1);
-
-            // Deserialize JSON data
-            return (Request)JsonSerializer.Deserialize(bytes, typeof(Request));
+            day -= 30;
+            month++;
         }
 
-        public static byte[] SerializeResponse(Response response)
+        while (month > 12)
         {
-            JsonSerializerOptions options = new JsonSerializerOptions();
-
-            return JsonSerializer.SerializeToUtf8Bytes(response, typeof(Response), options);
+            month -= 12;
+            year++;
         }
 
+        return new TimeDate(hour, day, month, year);
+    }
+
+    // Return request based on data
+    public static Request DeserializeRequest(byte[] bytes)
+    {
+        // Remove leading zeros
+        int size = Array.FindLastIndex(bytes, b => b != 0);
+        Array.Resize(ref bytes, size + 1);
+
+        // Deserialize JSON data
+        return JsonSerializer.Deserialize(bytes, typeof(Request)) as Request;
+    }
+
+    public static byte[] SerializeResponse(Response response)
+    {
+        JsonSerializerOptions options = new JsonSerializerOptions();
+
+        return JsonSerializer.SerializeToUtf8Bytes(response, typeof(Response), options);
     }
 
 }

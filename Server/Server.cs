@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TechSimServer
@@ -53,25 +52,37 @@ namespace TechSimServer
         {
             // Accept incoming connection
             TcpClient client = server.AcceptTcpClient();
+            NetworkStream stream = client.GetStream();
+            Console.WriteLine("Incoming Connection!");
 
             // After accepting connection, start listening for other connections on a new thread
             Task.Run(() => WaitForConnection());
-            
+
+            // Authorize client
+            //long userID;
+            // TO-DO
+
+            // Compatibility checks
+            // TO-DO
+
             // Handle client
+            Console.WriteLine("Client Connected!");
             while (true)
             {
-                NetworkStream stream = client.GetStream();
-
                 // Fill buffer with data from stream
                 byte[] buffer = new byte[bufferSize];
                 stream.Read(buffer, 0, buffer.Length);
-                
+
                 // Get request
                 Request request;
-                try {
+                try
+                {
                     request = Helpers.DeserializeRequest(buffer);
-                } catch (Exception e) { // Respond with "InvalidData" on exception
-                    buffer = Helpers.SerializeResponse(new Response(ResponseType.InvalidData, e));
+                }
+                catch (Exception)
+                {
+                    // Respond with "InvalidData" on exception
+                    buffer = Helpers.SerializeResponse(new Response(ResponseType.InvalidData));
                     stream.Write(buffer, 0, buffer.Length);
                     continue;
                 }
@@ -79,6 +90,7 @@ namespace TechSimServer
                 // Check if client wants to close connection
                 if (request.Type == RequestType.Disconnect)
                 {
+                    Console.WriteLine("Client Disconnected!");
                     break;
                 }
 
