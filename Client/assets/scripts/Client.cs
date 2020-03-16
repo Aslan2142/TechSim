@@ -1,8 +1,9 @@
 using Godot;
 using System;
-using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Text;
 
 public class Client : Node
 {
@@ -12,17 +13,50 @@ public class Client : Node
     
     public int bufferSize = 1024;
     
-    public void ConnectToServer(string hostname, int port)
+    public void ConnectToServer(string hostname, int port, string username, string password)
     {
         // Connect
         client = new TcpClient(hostname, port);
         stream = client.GetStream();
 
-        // Authorize
-        // TO-DO
-
         // Check compatibility
-        // TO-DO
+        Response<object> compatibilityResponse = GetData(RequestType.CheckCompatibility, Consts.VERSION);
+        if (compatibilityResponse.Type == ResponseType.NotCompatible)
+        {
+            // Close connection if not compatible
+            client.Close();
+            return;
+        }
+
+        // Get public key
+        byte[] buffer = new byte[bufferSize];
+        stream.Read(buffer, 0, buffer.Length);
+        RSAParameters2 par = Helpers.DeserializeResponse<RSAParameters2>(buffer).Data;
+        RSAParameters parameters = new RSAParameters() { D = par.D, DP = par.DP, DQ = par.DQ, P = par.P, Q = par.Q, InverseQ = par.InverseQ, Exponent = par.Exponent, Modulus = par.Modulus };
+        
+        RSACryptoServiceProvider cryptoServiceProvider = new RSACryptoServiceProvider();
+        cryptoServiceProvider.ImportParameters(parameters);
+
+        // Hash password
+        SHA512 sha256 = new SHA512Managed();
+        byte[] passwordHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+        password = Convert.ToBase64String(passwordHash);
+
+        // Encrypt Credentials
+        byte[] encryptedUsername = cryptoServiceProvider.Encrypt(Encoding.UTF8.GetBytes(username), false);
+        byte[] encryptedPassword = cryptoServiceProvider.Encrypt(Encoding.UTF8.GetBytes(password), false);
+        username = Convert.ToBase64String(encryptedUsername);
+        password = Convert.ToBase64String(encryptedPassword);
+
+        // Authorize
+        AccountInformation accountInformation = new AccountInformation(username, password);
+        Response<object> authorizationResponse = GetData(RequestType.Authorization, accountInformation);
+        if (authorizationResponse.Type == ResponseType.NotAuthorized)
+        {
+            // Close connection if not authorized
+            client.Close();
+            return;
+        }
     }
 
     public void DisconnectFromServer()
@@ -48,9 +82,19 @@ public class Client : Node
         return Helpers.DeserializeResponse<T>(buffer);
     }
 
+    public Response<object> GetData(Request request)
+    {
+        return GetData<object>(request);
+    }
+
     public Response<T> GetData<T>(RequestType type, System.Object data = null)
     {
         return GetData<T>(new Request(type, data));
+    }
+    
+    public Response<object> GetData(RequestType type, System.Object data = null)
+    {
+        return GetData<object>(new Request(type, data));
     }
 
 }

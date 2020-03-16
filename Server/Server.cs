@@ -1,12 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace TechSimServer
 {
 
-    class Server
+    public class Server
     {
 
         protected TcpListener server;
@@ -58,23 +61,100 @@ namespace TechSimServer
             // After accepting connection, start listening for other connections on a new thread
             Task.Run(() => WaitForConnection());
 
-            // Authorize client
-            //long userID;
-            // TO-DO
+            // Prepare variables
+            byte[] buffer;
+            Request request;
 
             // Compatibility checks
-            // TO-DO
+            {
+                buffer = new byte[bufferSize];
+                stream.Read(buffer, 0, buffer.Length);
+                try
+                {
+                    request = Helpers.DeserializeRequest(buffer);
+                    if (request.Data.ToString() == Consts.VERSION)
+                    {
+                        buffer = Helpers.SerializeResponse(new Response(ResponseType.IsCompatible));
+                        stream.Write(buffer, 0, buffer.Length);
+                    }
+                    else
+                    {
+                        throw new Exception(); // Exception will cause server to return ResponseType.NotCompatible
+                    }
+                }
+                catch (Exception)
+                {
+                    buffer = Helpers.SerializeResponse(new Response(ResponseType.NotCompatible));
+                    stream.Write(buffer, 0, buffer.Length);
+                    client.Close();
+                    Console.WriteLine("Client Compatibility Checks Failed! Closing Connection!");
+                    return;
+                }
+            }
+
+
+            // Authorize client
+            {
+                RSACryptoServiceProvider cryptoServiceProvider = new RSACryptoServiceProvider();
+
+                // Send public key
+                RSAParameters par = cryptoServiceProvider.ExportParameters(false);
+                RSAParameters2 parameters2 = new RSAParameters2(par.D, par.DP, par.DQ, par.P, par.Q, par.InverseQ, par.Exponent, par.Modulus);
+                buffer = Helpers.SerializeResponse(new Response(ResponseType.PublicKey, parameters2));
+                stream.Write(buffer, 0, buffer.Length);
+
+                // Start authorization process
+                int userID = -1;
+                buffer = new byte[bufferSize];
+                stream.Read(buffer, 0, buffer.Length);
+                try
+                {
+                    request = Helpers.DeserializeRequest(buffer);
+                    AccountInformation accountInformation = Helpers.Deserialize<AccountInformation>(request.Data.ToString());
+                    string username = accountInformation.Username;
+                    string password = accountInformation.Password;
+
+                    // Decrypt Credentials
+                    byte[] decryptedUsername = cryptoServiceProvider.Decrypt(Convert.FromBase64String(username), false);
+                    byte[] decryptedPassword = cryptoServiceProvider.Decrypt(Convert.FromBase64String(password), false);
+                    username = Encoding.UTF8.GetString(decryptedUsername);
+                    password = Encoding.UTF8.GetString(decryptedPassword);
+
+                    List<PlayerData> playerData = Game.instance.data.playerData;
+                    for (int i = 0; i < playerData.Count; i++)
+                    {
+                        if (playerData[i].username == username && playerData[i].password == password)
+                        {
+                            userID = i;
+                            buffer = Helpers.SerializeResponse(new Response(ResponseType.Authorized));
+                            stream.Write(buffer, 0, buffer.Length);
+                            break;
+                        }
+                    }
+                    if (userID < 0)
+                    {
+                        throw new Exception(); // Exception will cause server to return ResponseType.NotAuthorized
+                    }
+                }
+                catch (Exception)
+                {
+                    buffer = Helpers.SerializeResponse(new Response(ResponseType.NotAuthorized));
+                    stream.Write(buffer, 0, buffer.Length);
+                    client.Close();
+                    Console.WriteLine("Client Authorization Failed! Closing Connection!");
+                    return;
+                }
+            }
 
             // Handle client
             Console.WriteLine("Client Connected!");
             while (true)
             {
                 // Fill buffer with data from stream
-                byte[] buffer = new byte[bufferSize];
+                buffer = new byte[bufferSize];
                 stream.Read(buffer, 0, buffer.Length);
 
                 // Get request
-                Request request;
                 try
                 {
                     request = Helpers.DeserializeRequest(buffer);

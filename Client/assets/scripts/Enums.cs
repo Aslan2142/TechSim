@@ -3,11 +3,11 @@ using System;
 [Serializable]
 public enum RequestType
 {
-    Disconnect, GetTime, GetTasks // TO-DO
+    Disconnect, GetTime, GetTasks, CheckCompatibility, Authorization
 }
 
 [Serializable]
 public enum ResponseType
 {
-    InvalidData, InvalidRequest, Time, Tasks // TO-DO
+    InvalidData, InvalidRequest, Time, Tasks, IsCompatible, NotCompatible, Authorized, NotAuthorized, PublicKey
 }

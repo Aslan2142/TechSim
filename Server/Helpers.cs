@@ -44,6 +44,12 @@ public static class Helpers
         return JsonSerializer.Deserialize(bytes, typeof(Request)) as Request;
     }
 
+    public static T Deserialize<T>(string json)
+    {
+        // Deserialize JSON data
+        return (T)JsonSerializer.Deserialize(json, typeof(T));
+    }
+
     public static byte[] SerializeResponse(Response response)
     {
         JsonSerializerOptions options = new JsonSerializerOptions();

@@ -1,4 +1,54 @@
+/*
+    Structures have to be as a classes because of the bug in mono version that godot uses
+    https://github.com/mono/mono/issues/14871
+*/
+
 using System;
+
+[Serializable]
+public class Response<T>
+{
+    public ResponseType Type { get; set; }
+    public T Data { get; set; }
+
+    public Response() {}
+
+    public Response(ResponseType _type, T _data)
+    {
+        Type = _type;
+        Data = _data;
+    }
+}
+
+[Serializable]
+public class Response
+{
+    public ResponseType Type { get; set; }
+    public Object Data { get; set; }
+
+    public Response() {}
+
+    public Response(ResponseType _type, Object _data = null)
+    {
+        Type = _type;
+        Data = _data;
+    }
+}
+
+[Serializable]
+public class Request
+{
+    public RequestType Type { get; set; }
+    public Object Data { get; set; }
+
+    public Request() {}
+
+    public Request(RequestType _type, Object _data = null)
+    {
+        Type = _type;
+        Data = _data;
+    }
+}
 
 [Serializable]
 public class TimeDate
@@ -20,31 +70,43 @@ public class TimeDate
 }
 
 [Serializable]
-public class Request
+public class AccountInformation
 {
-    public RequestType Type { get; set; }
-    public Object Data { get; set; }
+    public string Username { get; set; }
+    public string Password { get; set; }
 
-    public Request() {}
+    public AccountInformation() {}
 
-    public Request(RequestType _type, Object _data = null)
+    public AccountInformation(string _username, string _password)
     {
-        Type = _type;
-        Data = _data;
+        Username = _username;
+        Password = _password;
     }
 }
 
 [Serializable]
-public class Response
+public class RSAParameters2 // Clone of RSAParameters as a class, needed because of the bug in mono version that godot uses (https://github.com/mono/mono/issues/14871)
 {
-    public ResponseType Type { get; set; }
-    public Object Data { get; set; }
+    public byte[] D { get; set; }
+    public byte[] DP { get; set; }
+    public byte[] DQ { get; set; }
+    public byte[] P { get; set; }
+    public byte[] Q { get; set; }
+    public byte[] InverseQ { get; set; }
+    public byte[] Exponent { get; set; }
+    public byte[] Modulus { get; set; }
 
-    public Response() {}
+    public RSAParameters2() {}
 
-    public Response(ResponseType _type, Object _data = null)
+    public RSAParameters2(byte[] _d, byte[] _dp, byte[] _dq, byte[] _p, byte[] _q, byte[] _inverseQ, byte[] _exponent, byte[] _modulus)
     {
-        Type = _type;
-        Data = _data;
+        D = _d;
+        DP = _dp;
+        DQ = _dq;
+        P = _p;
+        Q = _q;
+        InverseQ = _inverseQ;
+        Exponent = _exponent;
+        Modulus = _modulus;
     }
 }

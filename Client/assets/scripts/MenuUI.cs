@@ -23,7 +23,7 @@ public class MenuUI : Node2D
     public void _on_ConnectButton_pressed()
     {
         Client client = GetNode("/root/Client") as Client;
-        client.ConnectToServer(IpAddressLineEdit.Text, Convert.ToInt32(PortLineEdit.Text));
+        client.ConnectToServer(IpAddressLineEdit.Text, Convert.ToInt32(PortLineEdit.Text), UsernameLineEdit.Text, PasswordLineEdit.Text);
     }
 
     // Quit game
