@@ -23,8 +23,6 @@ public static class Helpers
 
     public static byte[] SerializeRequest(Request request)
     {
-        JsonSerializerOptions options = new JsonSerializerOptions();
-
         return JsonSerializer.SerializeToUtf8Bytes(request, typeof(Request));
     }
 

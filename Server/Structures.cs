@@ -1,5 +1,5 @@
 /*
-    Structures have to be as a classes because of the bug in mono version that godot uses
+    Structures have to be as classes because of the bug in mono version that godot uses
     https://github.com/mono/mono/issues/14871
 */
 

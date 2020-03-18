@@ -12,22 +12,31 @@ public class Client : Node
     private NetworkStream stream;
     
     public int bufferSize = 1024;
+
+    public string serverMessage { get; private set; }
     
-    public void ConnectToServer(string hostname, int port, string username, string password)
+    public bool ConnectToServer(string hostname, int port, string username, string password)
     {
         // Connect
-        client = new TcpClient(hostname, port);
-        stream = client.GetStream();
-
+        try {
+            client = new TcpClient(hostname, port);
+            stream = client.GetStream();
+        }
+        catch (Exception)
+        {
+            serverMessage = "Can't connect to the server";
+            return false;
+        }
+        
         // Check compatibility
         Response<object> compatibilityResponse = GetData(RequestType.CheckCompatibility, Consts.VERSION);
         if (compatibilityResponse.Type == ResponseType.NotCompatible)
         {
             // Close connection if not compatible
             client.Close();
-            return;
+            return true;
         }
-
+        
         // Get public key
         byte[] buffer = new byte[bufferSize];
         stream.Read(buffer, 0, buffer.Length);
@@ -36,18 +45,18 @@ public class Client : Node
         
         RSACryptoServiceProvider cryptoServiceProvider = new RSACryptoServiceProvider();
         cryptoServiceProvider.ImportParameters(parameters);
-
+        
         // Hash password
         SHA512 sha256 = new SHA512Managed();
         byte[] passwordHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
         password = Convert.ToBase64String(passwordHash);
-
+        
         // Encrypt Credentials
         byte[] encryptedUsername = cryptoServiceProvider.Encrypt(Encoding.UTF8.GetBytes(username), false);
         byte[] encryptedPassword = cryptoServiceProvider.Encrypt(Encoding.UTF8.GetBytes(password), false);
         username = Convert.ToBase64String(encryptedUsername);
         password = Convert.ToBase64String(encryptedPassword);
-
+        
         // Authorize
         AccountInformation accountInformation = new AccountInformation(username, password);
         Response<object> authorizationResponse = GetData(RequestType.Authorization, accountInformation);
@@ -55,8 +64,13 @@ public class Client : Node
         {
             // Close connection if not authorized
             client.Close();
-            return;
+            serverMessage = authorizationResponse.Data.ToString();
+            return true;
         }
+
+        serverMessage = "Successfully connected to the server";
+
+        return true;
     }
 
     public void DisconnectFromServer()

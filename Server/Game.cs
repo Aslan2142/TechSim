@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using System.Timers;
+using System.Text.Json;
 
 namespace TechSimServer
 {
@@ -22,25 +24,40 @@ namespace TechSimServer
         // If save doesn't exist, create new game
         public static bool Load()
         {
-            // TO-DO
+            try
+            {
+                instance = new Game();
+                if (File.Exists(Config.instance.GAME_SAVE_LOCATION))
+                {
+                    string gameDataJson = File.ReadAllText(Config.instance.GAME_SAVE_LOCATION);
+                    instance.data = JsonSerializer.Deserialize(gameDataJson, typeof(GameData)) as GameData;
+                } else {
+                    Console.WriteLine("Game save not found. Creating new game data...");
+                }
 
-            instance = new Game();
-            // Test Users
-            PlayerData p1 = new PlayerData(); p1.username = "Aslan2142"; p1.password = "fAirfleNWWSe6XZhOfna9oWBiQORaYcp608hpihF3ei3+WFtSlN2zBZocUxw29r8aQ3Ntkyh2G1IdhgvgKuB/g==";
-            PlayerData p2 = new PlayerData(); p2.username = "TestUser"; p2.password = "MydaiqSOqRi9U6kYGql18Vqw0GRTmPWRigBtCGdcHLJ9XGRdvQhO7lbmdeJbpAGfLs6jfKnimVtJ/LEsCWoDLg==";
-            PlayerData p3 = new PlayerData(); p3.username = "Aslanek"; p3.password = "GKaL3SBa0SY+BM5sRUkgVHMRJ6tsSjc9kPU0Z0l1dVhL7g7CPJIvKAvxeMoOqg0C/P6Mb9vsoKquAkyAuOGRNA==";
-            instance.data.playerData.Add(p1);
-            instance.data.playerData.Add(p2);
-            instance.data.playerData.Add(p3);
-            return true;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         // Save game
         public static bool Save()
         {
-            // TO-DO
+            try
+            {
+                JsonSerializerOptions options = new JsonSerializerOptions() { WriteIndented = true };
+                string gameDataJson = JsonSerializer.Serialize(instance.data, typeof(GameData), options);
+                File.WriteAllText(Config.instance.GAME_SAVE_LOCATION, gameDataJson);
 
-            return true;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         // Start game tick timer
@@ -66,7 +83,7 @@ namespace TechSimServer
             data.currentTime += data.timeSpeed;
         }
 
-        public Response HandleRequest(Request request)
+        public Response HandleRequest(Request request, PlayerData player)
         {
             switch (request.Type)
             {

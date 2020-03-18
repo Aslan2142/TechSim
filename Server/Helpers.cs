@@ -52,9 +52,7 @@ public static class Helpers
 
     public static byte[] SerializeResponse(Response response)
     {
-        JsonSerializerOptions options = new JsonSerializerOptions();
-
-        return JsonSerializer.SerializeToUtf8Bytes(response, typeof(Response), options);
+        return JsonSerializer.SerializeToUtf8Bytes(response, typeof(Response));
     }
 
 }

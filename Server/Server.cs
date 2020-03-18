@@ -50,6 +50,22 @@ namespace TechSimServer
             server.Stop();
         }
 
+        // Compatibility checks
+        public bool CheckClientCompatibility()
+        {
+
+
+            return true;
+        }
+
+        // Authorize client based on username and password
+        public bool AuthorizeClient()
+        {
+
+            
+            return true;
+        }
+
         // Start listening for incoming connections
         public void WaitForConnection()
         {
@@ -64,6 +80,7 @@ namespace TechSimServer
             // Prepare variables
             byte[] buffer;
             Request request;
+            PlayerData player;
 
             // Compatibility checks
             {
@@ -105,6 +122,8 @@ namespace TechSimServer
 
                 // Start authorization process
                 int userID = -1;
+                bool accountExists = false;
+                string notAuthorizedMessage = "";
                 buffer = new byte[bufferSize];
                 stream.Read(buffer, 0, buffer.Length);
                 try
@@ -114,31 +133,60 @@ namespace TechSimServer
                     string username = accountInformation.Username;
                     string password = accountInformation.Password;
 
-                    // Decrypt Credentials
+                    // Decrypt credentials
                     byte[] decryptedUsername = cryptoServiceProvider.Decrypt(Convert.FromBase64String(username), false);
                     byte[] decryptedPassword = cryptoServiceProvider.Decrypt(Convert.FromBase64String(password), false);
                     username = Encoding.UTF8.GetString(decryptedUsername);
                     password = Encoding.UTF8.GetString(decryptedPassword);
 
+                    // Find player data
                     List<PlayerData> playerData = Game.instance.data.playerData;
                     for (int i = 0; i < playerData.Count; i++)
                     {
-                        if (playerData[i].username == username && playerData[i].password == password)
+                        if (playerData[i].username == username)
                         {
-                            userID = i;
-                            buffer = Helpers.SerializeResponse(new Response(ResponseType.Authorized));
-                            stream.Write(buffer, 0, buffer.Length);
+                            if (playerData[i].password == password)
+                            {
+                                userID = i;
+                            }
+                            accountExists = true;
                             break;
                         }
                     }
+
+                    // If player does not exist, create a new account
+                    if (!accountExists)
+                    {
+                        // Do username length checks
+                        if (username.Length < Config.instance.MINIMUM_USERNAME_LENGTH || username.Length > Config.instance.MAXIMUM_USERNAME_LENGTH)
+                        {
+                            notAuthorizedMessage = Config.instance.AUTHORIZATION_WRONG_USERNAME_LENGTH_MESSAGE;
+                            throw new Exception(); // Exception will cause server to return ResponseType.NotAuthorized
+                        }
+
+                        // Create player data
+                        PlayerData newPlayer = new PlayerData();
+                        newPlayer.username = username;
+                        newPlayer.password = password;
+                        
+                        playerData.Add(newPlayer);
+                        userID = playerData.Count - 1;
+                    }
+
                     if (userID < 0)
                     {
+                        notAuthorizedMessage = Config.instance.AUTHORIZATION_INCORRECT_PASSWORD_MESSAGE;
                         throw new Exception(); // Exception will cause server to return ResponseType.NotAuthorized
+                    } else {
+                        buffer = Helpers.SerializeResponse(new Response(ResponseType.Authorized));
+                        stream.Write(buffer, 0, buffer.Length);
                     }
+
+                    player = playerData[userID];
                 }
                 catch (Exception)
                 {
-                    buffer = Helpers.SerializeResponse(new Response(ResponseType.NotAuthorized));
+                    buffer = Helpers.SerializeResponse(new Response(ResponseType.NotAuthorized, notAuthorizedMessage));
                     stream.Write(buffer, 0, buffer.Length);
                     client.Close();
                     Console.WriteLine("Client Authorization Failed! Closing Connection!");
@@ -175,7 +223,7 @@ namespace TechSimServer
                 }
 
                 // Handle client request
-                Response response = Game.instance.HandleRequest(request);
+                Response response = Game.instance.HandleRequest(request, player);
 
                 // Fill buffer with returned data and send it to client
                 buffer = Helpers.SerializeResponse(response);

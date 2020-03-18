@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text.Json;
 
 namespace TechSimServer
 {
@@ -10,6 +9,13 @@ namespace TechSimServer
         // Program entry point
         private static void Main(string[] args)
         {
+            // Load Config
+            if (!Config.Load())
+            {
+                Console.WriteLine("Can't load config file. Exiting...");
+                return;
+            }
+            System.Console.WriteLine(Config.instance.AUTHORIZATION_WRONG_PASSWORD_LENGTH_MESSAGE);
             // Load and start game instance
             if (!Game.Load())
             {
@@ -56,6 +62,11 @@ namespace TechSimServer
                     // Stop server
                     case "stop":
                         gameRunning = false;
+                        break;
+                    
+                    // Save game data
+                    case "save":
+                        Game.Save();
                         break;
 
                     // Unknown command
